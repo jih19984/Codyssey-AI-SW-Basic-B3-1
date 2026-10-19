@@ -1,0 +1,107 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html,body{margin:0;background:#fff}
+  text{font-family:-apple-system,"Apple SD Gothic Neo","Helvetica Neue",Arial,sans-serif}
+  .t{font-size:17px;font-weight:700}
+  .s{font-size:14px;fill:#333}
+  .m{font-size:13px;fill:#444;font-family:Menlo,monospace;white-space:pre}
+</style></head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="980" viewBox="0 0 1400 980">
+  <defs>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f6feb"/></marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8730c"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2da44e"/></marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="40" y="38" style="font-size:24px;font-weight:800">B3-1 Web Service Architecture</text>
+  <text x="40" y="62" class="s">VPC로 격리된 네트워크에 EC2(Nginx)를 배포하고, 외부 → 서비스 트래픽 흐름을 표현</text>
+
+  <!-- Clients -->
+  <rect x="380" y="90" width="260" height="70" rx="10" fill="#eef4ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="510" y="120" text-anchor="middle" class="t">👥 Internet Users</text>
+  <text x="510" y="144" text-anchor="middle" class="s">Browser · 0.0.0.0/0</text>
+
+  <rect x="950" y="90" width="260" height="70" rx="10" fill="#fff4e8" stroke="#e8730c" stroke-width="2"/>
+  <text x="1080" y="120" text-anchor="middle" class="t">🧑‍💻 Admin (My Mac)</text>
+  <text x="1080" y="144" text-anchor="middle" class="s">My IP /32 · key: b3-1-key.pem</text>
+
+  <!-- AWS Cloud / Region -->
+  <rect x="40" y="200" width="1320" height="700" rx="14" fill="#fafafa" stroke="#232f3e" stroke-width="2"/>
+  <text x="62" y="230" class="t">☁️ AWS Cloud · Region: Asia Pacific (Seoul) ap-northeast-2</text>
+
+  <!-- VPC -->
+  <rect x="80" y="290" width="1240" height="580" rx="12" fill="#f3fbf5" stroke="#2da44e" stroke-width="2.5"/>
+  <text x="102" y="322" class="t" fill="#1a7f37">VPC  b3-1-vpc  ·  10.0.0.0/16</text>
+
+  <!-- IGW on VPC border -->
+  <rect x="590" y="262" width="220" height="58" rx="10" fill="#7a3fd1" stroke="#4b1f94" stroke-width="2"/>
+  <text x="700" y="288" text-anchor="middle" class="t" fill="#fff">🚪 Internet Gateway</text>
+  <text x="700" y="308" text-anchor="middle" style="font-size:13px" fill="#efe6ff">b3-1-igw · Attached</text>
+
+  <!-- Route table -->
+  <rect x="110" y="360" width="330" height="150" rx="10" fill="#fff" stroke="#2da44e" stroke-width="1.8"/>
+  <text x="130" y="390" class="t">📋 Route Table  b3-1-public-rt</text>
+  <line x1="130" y1="402" x2="420" y2="402" stroke="#ccc"/>
+  <text x="130" y="425" class="m">Destination     Target</text>
+  <text x="130" y="450" class="m">0.0.0.0/0       igw (b3-1-igw)</text>
+  <text x="130" y="473" class="m">10.0.0.0/16     local</text>
+  <text x="130" y="497" class="s" style="font-size:12px">explicitly associated → Public Subnet</text>
+  <path d="M440,440 C470,440 470,470 495,470" fill="none" stroke="#2da44e" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ag)"/>
+
+  <!-- Public subnet -->
+  <rect x="500" y="360" width="790" height="480" rx="10" fill="#e6f6ea" stroke="#2da44e" stroke-width="2"/>
+  <text x="860" y="390" class="t" fill="#1a7f37">Public Subnet  b3-1-public-subnet</text>
+  <text x="860" y="412" class="s">10.0.1.0/24 · ap-northeast-2a · Public IPv4 auto-assign</text>
+
+  <!-- Security group -->
+  <rect x="560" y="440" width="680" height="370" rx="10" fill="#fff" stroke="#d1242f" stroke-width="2.2" stroke-dasharray="9 6"/>
+  <text x="870" y="466" class="t" fill="#d1242f">🛡 Security Group  b3-1-web-sg</text>
+  <text x="870" y="485" class="s" style="font-size:12px" fill="#d1242f">EC2에 연결된 방화벽 규칙 묶음 (네트워크 영역 아님)</text>
+  <rect x="870" y="494" width="350" height="74" rx="6" fill="#fff5f5" stroke="#d1242f" stroke-width="1"/>
+  <text x="882" y="512" class="s" style="font-size:12px;font-weight:700" fill="#d1242f">Rules (SG에 들어 있는 규칙)</text>
+  <text x="882" y="530" class="m">Inbound : HTTP  80  ← 0.0.0.0/0</text>
+  <text x="882" y="547" class="m">          SSH   22  ← My IP/32</text>
+  <text x="882" y="564" class="m">Outbound: All traffic → 0.0.0.0/0</text>
+
+  <!-- EC2 -->
+  <rect x="700" y="600" width="430" height="180" rx="10" fill="#fff7e6" stroke="#ff9900" stroke-width="2.5"/>
+  <text x="915" y="632" text-anchor="middle" class="t">🖥 EC2  b3-1-web</text>
+  <text x="915" y="656" text-anchor="middle" class="s">t3.micro · Ubuntu 26.04 LTS · EBS gp3 8GiB</text>
+  <rect x="790" y="672" width="250" height="40" rx="8" fill="#009639"/>
+  <text x="915" y="698" text-anchor="middle" style="font-size:15px;font-weight:700" fill="#fff">Nginx  listen 0.0.0.0:80</text>
+  <text x="915" y="738" text-anchor="middle" class="m">Private IP 10.0.1.78</text>
+  <text x="915" y="760" text-anchor="middle" class="m">Public IP 13.124.115.28 (auto-assigned)</text>
+
+  <!-- HTTP flow (blue) -->
+  <path d="M560,160 L560,248 L640,248 L640,258" fill="none" stroke="#1f6feb" stroke-width="3" marker-end="url(#ab)"/>
+  <path d="M660,320 L660,560 L800,560 L800,596" fill="none" stroke="#1f6feb" stroke-width="3" marker-end="url(#ab)"/>
+  <circle cx="560" cy="180" r="13" fill="#1f6feb"/><text x="560" y="185" text-anchor="middle" style="font-size:14px;font-weight:800" fill="#fff">1</text>
+  <text x="580" y="185" style="font-size:14px;font-weight:700" fill="#1f6feb">HTTP :80  http://13.124.115.28</text>
+
+  <!-- SSH flow (orange) -->
+  <path d="M1080,160 L1080,248 L760,248 L760,258" fill="none" stroke="#e8730c" stroke-width="3" stroke-dasharray="10 5" marker-end="url(#ao)"/>
+  <path d="M740,320 L740,580 L1030,580 L1030,596" fill="none" stroke="#e8730c" stroke-width="3" stroke-dasharray="10 5" marker-end="url(#ao)"/>
+  <circle cx="1080" cy="180" r="13" fill="#e8730c"/><text x="1080" y="185" text-anchor="middle" style="font-size:14px;font-weight:800" fill="#fff">2</text>
+  <text x="1100" y="185" style="font-size:14px;font-weight:700" fill="#e8730c">SSH :22 (My IP only)</text>
+
+  <!-- Legend -->
+  <g transform="translate(110,560)">
+    <rect width="360" height="250" rx="10" fill="#fff" stroke="#bbb"/>
+    <text x="18" y="30" class="t">Traffic flow</text>
+    <line x1="18" y1="58" x2="70" y2="58" stroke="#1f6feb" stroke-width="3" marker-end="url(#ab)"/>
+    <text x="82" y="63" class="s">① HTTP 80: Users → IGW → Route</text>
+    <text x="82" y="83" class="s">   → Subnet → SG(80 허용) → Nginx</text>
+    <line x1="18" y1="113" x2="70" y2="113" stroke="#e8730c" stroke-width="3" stroke-dasharray="10 5" marker-end="url(#ao)"/>
+    <text x="82" y="118" class="s">② SSH 22: My IP → IGW → SG(22,</text>
+    <text x="82" y="138" class="s">   My IP/32만 허용) → EC2</text>
+    <line x1="18" y1="168" x2="70" y2="168" stroke="#2da44e" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ag)"/>
+    <text x="82" y="173" class="s">Route table ↔ subnet association</text>
+    <rect x="18" y="192" width="52" height="22" rx="4" fill="none" stroke="#d1242f" stroke-width="2" stroke-dasharray="7 5"/>
+    <text x="82" y="208" class="s">SG: EC2에 붙는 규칙 (영역 아님)</text>
+    <text x="18" y="236" class="s" style="font-size:12px">IGW: Public IP ↔ Private IP 1:1 변환</text>
+  </g>
+</svg>
+</body></html>
